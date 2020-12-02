@@ -42,7 +42,7 @@ else
         validArgs=$(echo "$existingUrl" | sed -e 's=https://github.com/==' -e 's=/= =' -e 's/.git//')
 
         echo -e "Make sure to use the same .git URL you initialized with! \n"
-        echo "Try this command with these arguments: github-create-repo $validArgs"
+        echo "Try this command with these arguments: github-easyflow $validArgs"
       fi
 
   else
