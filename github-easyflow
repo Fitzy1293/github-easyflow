@@ -1,0 +1,76 @@
+#!/bin/sh
+
+function githubPush {
+  echo -e "\nRemote github repo and local link \nRemote:\t $githubUrl\nLocal:\t $(echo $PWD)\n"
+  #touch push.log
+  delin="$(printf "%0.s-" {1..50})"
+  git add .
+  echo -e "$delin\n\tgit commit -m"
+  git commit -m "$commitMessage"
+  echo -e "$delin"
+
+  echo -e '\tgit push -u origin master'
+  git push -u origin master
+  echo -e "$delin"
+}
+
+existingUrl=$(grep 'url = ' .git/config | sed 's/	url = //')
+
+if [ "$1" = "-easyupdate" ]; then
+  githubUrl="$existingUrl"
+  commitMessage="$2"
+  githubPush
+
+else
+  user="$1"
+  repo="$2"
+
+  githubUrl="https://github.com/$user/$repo.git"
+
+  # If there is a .git folder, just add, commit, and push
+  if [[ $(find -name .git | wc -l) -gt 0 ]]; then
+      echo -e "git initialized: True\n"
+      echo "Existing URL: $existingUrl"
+      echo "$PWD is initialized with a .git folder!"
+
+      if [ "$githubUrl" = "$existingUrl" ]; then
+        echo -e "Arguments match info from .git/config \n"
+        githubPush
+
+      else
+        existingUrl=$(grep 'url = ' .git/config | sed 's/	url = //')
+        validArgs=$(echo "$existingUrl" | sed -e 's=https://github.com/==' -e 's=/= =' -e 's/.git//')
+
+        echo -e "Make sure to use the same .git URL you initialized with! \n"
+        echo "Try this command with these arguments: github-create-repo $validArgs"
+      fi
+
+  else
+      echo -e "git initialized: False\n"
+      # If no local .git folder and the github URL 404s then initialize on github and locally.
+      if [[ $(curl "https://github.com/$user/$repo" | grep '="404 &ldquo;This is not the web page you are looking for&rdquo;"' | wc -l) -eq 1 ]]; then
+          git init
+          touch README.md .gitignore
+          echo "$repo" >> README.md
+          echo '*.log' >> .gitignore
+
+          echo "Ignores .log files by default in main dir"
+          echo -e "\nhttps//github.com/settings/tokens for personal access token"
+          echo -e "For scopes check\n\trepo\n\tadmin:repo_hook\n\tdelete_repo"
+
+          git remote add origin "$githubUrl"
+          cat $3 | xclip -selection c && echo -e "\n--Copied access token--"
+          echo -e "Paste copied token below for github authentification:\n"
+          curl -u "user" https://api.github.com/user/repos -d "{\"name\": \""$repo"\"}" > github_creation.log
+
+          commitMessage="First commit"
+          githubPush
+
+    else # If you already have a repo with this name.
+        echo "$githubUrl already exists, try another repo name"
+
+    fi
+
+  fi
+
+fi
