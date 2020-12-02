@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/env bash
 
 function githubPush {
   echo -e "\nRemote github repo and local link \nRemote:\t $githubUrl\nLocal:\t $(echo $PWD)\n"
